@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hostapd Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid cards">
+      <div class="card">
+        <div class="title">Access Point</div>
+        <div id="ap-info" class="muted">Loading…</div>
+      </div>
+      <div class="card">
+        <div class="title">Connected clients</div>
+        <div style="font-size:40px;font-weight:700" id="live-num">0</div>
+        <div class="hint">live</div>
+      </div>
+      <div class="card">
+        <div class="title">24h Events</div>
+        <div><span class="good">⬆ <span id="ev-conn">0</span></span> &nbsp; <span class="bad">⬇ <span id="ev-disc">0</span></span></div>
+        <div class="hint">connect / disconnect</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Client Count (last ~<span id="history-minutes"></span> min)</div>
+      <canvas id="clientsChart" height="90"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Connected Devices</div>
+      <div class="hint">No DHCP/DNS on AP: devices are shown by MAC. Rates are negotiated link rates, not actual throughput.</div>
+      <div style="max-height: 420px; overflow: auto; margin-top: 8px">
+      <table>
+        <thead>
+          <tr>
+            <th>MAC</th>
+            <th>Signal (dBm)</th>
+            <th>TX / RX (Mbps)</th>
+            <th>TX / RX (pkts)</th>
+            <th>Bytes TX / RX</th>
+            <th>Connected</th>
+            <th>Auth</th>
+            <th>Inactive (s)</th>
+          </tr>
+        </thead>
+        <tbody id="clients-body">
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="footer muted">Powered by hostapd_cli • Refresh every <span id="poll-interval"></span>s • Interface: <code id="iface"></code></div>
+  </div>
+<script src="main.js"></script>
+</body>
+</html>
