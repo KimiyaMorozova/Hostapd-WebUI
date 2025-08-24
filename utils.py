@@ -39,8 +39,6 @@ from collections import defaultdict, deque
 
 from flask import Flask, jsonify, request, Response, send_from_directory
 
-from utils import run_cmd, parse_hostapd_status, parse_all_sta, scan_logs
-
 # ---------------------- Configuration ----------------------
 HOST = os.getenv("DASHBOARD_HOST", "0.0.0.0")
 PORT = int(os.getenv("DASHBOARD_PORT", 8080))

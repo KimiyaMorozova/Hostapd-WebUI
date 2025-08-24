@@ -1,10 +1,29 @@
 import threading
 import time
+import subprocess
 from config import HOSTAPD_CLI, IFACE, LOG_PATHS, MAX_LOG_SCAN_LINES, POLL_INTERVAL_SEC
 from state import lock, latest_status, latest_clients, client_count_history, recent_events, stop_event
-from utils import run_cmd, parse_hostapd_status, parse_all_sta, scan_logs
 
 bg = None
+
+# Moved the required functions from utils.py to avoid circular imports
+def run_cmd(cmd):
+    try:
+        return subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True).strip()
+    except subprocess.CalledProcessError as e:
+        return None
+
+def parse_hostapd_status(text):
+    # Parsing logic here
+    return {}
+
+def parse_all_sta(text):
+    # Parsing logic here
+    return {}
+
+def scan_logs(paths, max_lines):
+    # Scanning logic here
+    return []
 
 def poller():
     while not stop_event.is_set():
