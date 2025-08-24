@@ -40,7 +40,19 @@ def api_summary():
 
 INDEX_HTML = """
 <!doctype html>
-<!-- ...existing HTML template... -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hostapd Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <div id="app">Loading...</div>
+  <script src="static/main.js"></script>
+</body>
+</html>
 """
 
 @app.get("/")

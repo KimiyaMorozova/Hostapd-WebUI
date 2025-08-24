@@ -7,7 +7,8 @@ from config import HOST, PORT
 from poller import start_poller, stop_poller
 import routes
 
-app = routes.app
+# Ensure the static folder is correctly served
+app = Flask(__name__, static_folder="static")
 
 if __name__ == "__main__":
     # allow Ctrl+C
