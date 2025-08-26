@@ -17,14 +17,7 @@ def hostapd_status():
         )
         text = out.decode(errors="ignore").strip()
 
-        if not text:
-            return {"active": "No"}
-
-        data = {}
-        for line in text.splitlines():
-            if "=" in line:
-                k, v = line.split("=", 1)
-                data[k.strip()] = v.strip()
+        print(text)
 
         return {
             "active": "Yes",
