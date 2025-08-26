@@ -3,6 +3,8 @@ import signal
 from flask import Flask, render_template
 from routes import register_routes
 from state import IFACE, POLL_INTERVAL_SEC, HISTORY_MINUTES, HOST, PORT
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 register_routes(app)
