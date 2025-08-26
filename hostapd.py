@@ -1,7 +1,6 @@
 import re, time, subprocess, threading, atexit, logging, traceback
 from datetime import datetime
-from state import HOSTAPD_CLI, IFACE, LOG_PATHS, MAX_LOG_SCAN_LINES, POLL_INTERVAL_SEC
-from state import latest_status, latest_clients, client_count_history, recent_events, lock, stop_event
+import state
 
 logger = logging.getLogger("hostapd.poller")
 
@@ -153,32 +152,34 @@ def scan_logs(paths, max_lines=5000):
 # ---------------------- Poller Thread ----------------------
 
 def poller():
-    logger.info("poller thread started for iface=%s", IFACE)
-    while not stop_event.is_set():
+    logger.info("poller thread started for iface=%s", state.IFACE)
+    while not state.stop_event.is_set():
         try:
-            status_text = run_cmd([HOSTAPD_CLI, '-i', IFACE, 'status'])
-            clients_text = run_cmd([HOSTAPD_CLI, '-i', IFACE, 'all_sta'])
+            status_text = run_cmd([state.HOSTAPD_CLI, '-i', state.IFACE, 'status'])
+            clients_text = run_cmd([state.HOSTAPD_CLI, '-i', state.IFACE, 'all_sta'])
             
             status = parse_hostapd_status(status_text) if status_text else {}
             clients = parse_all_sta(clients_text) if clients_text else {}
-            ev = scan_logs(LOG_PATHS, MAX_LOG_SCAN_LINES)
+            ev = scan_logs(state.LOG_PATHS, state.MAX_LOG_SCAN_LINES)
             
-            with lock:
-                global latest_status, latest_clients
-                latest_status = status
-                latest_clients = clients
+            with state.lock:
+                # mutate the state objects instead of rebinding names
+                state.latest_status.clear()
+                state.latest_status.update(status)
+                state.latest_clients.clear()
+                state.latest_clients.update(clients)
                 # update history
-                client_count_history.append((int(time.time()), len(clients)))
-                # update events
+                state.client_count_history.append((int(time.time()), len(clients)))
+                # update events (keep only 24h window)
                 now = time.time()
-                while recent_events and recent_events[0][0] < now - 24*3600:
-                    recent_events.popleft()
+                while state.recent_events and state.recent_events[0][0] < now - 24*3600:
+                    state.recent_events.popleft()
                 for e in ev:
-                    recent_events.append(e)
+                    state.recent_events.append(e)
             logger.debug("poller iteration: clients=%d events=%d", len(clients), len(ev))
         except Exception:
             logger.exception("poller iteration failed")
-        time.sleep(POLL_INTERVAL_SEC)
+        time.sleep(state.POLL_INTERVAL_SEC)
     logger.info("poller thread stopping")
 
 bg = threading.Thread(target=poller, daemon=True)
@@ -186,7 +187,7 @@ bg.start()
 
 @atexit.register
 def _cleanup():
-    stop_event.set()
+    state.stop_event.set()
     try:
         bg.join(timeout=1)
     except Exception:
