@@ -15,9 +15,7 @@ def hostapd_status():
             stderr=subprocess.STDOUT,
             timeout=3
         )
-        text = out.decode(errors="ignore").strip()
-
-        print(text)
+        data = out.decode("utf-8").strip().split("\n")
 
         return {
             "active": "Yes",
