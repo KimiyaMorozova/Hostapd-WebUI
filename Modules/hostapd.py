@@ -16,13 +16,16 @@ def hostapd_status():
             timeout=3
         )
         data = out.decode("utf-8").strip().split("\n")
+        data = {k: v for k, v in (line.split("=", 1) for line in data if "=" in line)} # each value gets a assinge
+        data = {k.strip(): v.strip() for k, v in data.items()}  # remove whitespace
+        
 
         return {
             "active": "Yes",
             "interface": IFACE,
-            # "ssid": data.get("ssid", "—"),
-            # "channel": data.get("channel", "—"),
-            # "frequency": data.get("freq", "—")
+            "ssid": data.get("ssid", "—"),
+            "channel": data.get("channel", "—"),
+            "frequency": data.get("freq", "—")
         }
 
     except Exception:
