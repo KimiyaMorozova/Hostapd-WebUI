@@ -1,36 +1,22 @@
-from flask import Flask, render_template, jsonify
-import subprocess, re, time
+#!/usr/bin/env python3
+import signal
+from flask import Flask, render_template
+from routes import register_routes
+from state import IFACE, POLL_INTERVAL_SEC, HISTORY_MINUTES, HOST, PORT
 
 app = Flask(__name__)
+register_routes(app)
 
-# --- Hostapd Abfrage ---
-def get_connected_clients():
-    clients = []
-    try:
-        result = subprocess.check_output(["hostapd_cli", "-i", "wlan0", "all_sta"], text=True)
-        blocks = result.strip().split("\n\n")
-        for block in blocks:
-            lines = block.split("\n")
-            if not lines or not re.match(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$", lines[0], re.I):
-                continue
-            mac = lines[0]
-            info = {"mac": mac}
-            for line in lines[1:]:
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    info[k.strip()] = v.strip()
-            clients.append(info)
-    except Exception as e:
-        print("Fehler:", e)
-    return clients
-
-@app.route("/")
+@app.get("/")
 def index():
-    return render_template("index.html")
-
-@app.route("/api/clients")
-def api_clients():
-    return jsonify(get_connected_clients())
+    return render_template(
+        "index.html",
+        iface=IFACE,
+        poll=POLL_INTERVAL_SEC,
+        interval=int(POLL_INTERVAL_SEC * 1000),
+        history_minutes=HISTORY_MINUTES
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    app.run(host=HOST, port=PORT, debug=False)

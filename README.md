@@ -1,9 +1,0 @@
-# This is a Quick Project i generated in CHATGPT to create a simple Stats-Dashboard for Hostapd. 
-The goal is to have a Dashboard to edit and view Hostapd specific things, without running a fullstack webui like RaspAP. 
-That is because DNS, DHCP and Routing is handled on a different machine than my "Stupid" AP. 
-
-This Project may be further Developed (Because i actually can programm in python, i was just lazy) but it may also not be developed. Idk, honestly.
-
-requirements 
-python3 
-python-flask

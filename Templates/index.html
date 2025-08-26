@@ -1,30 +1,160 @@
-<!DOCTYPE html>
-<html lang="de">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hostapd Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hostapd Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0b1020; --card: #121729; --text: #eef2ff; --muted:#a5b4fc; --ok:#34d399; --warn:#fbbf24; --bad:#f87171; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, sans-serif; background: linear-gradient(180deg,#0b1020,#0d1326 40%,#0b1020); color: var(--text); }
+    .wrap { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+    .grid { display:grid; gap:16px; }
+    .grid.cards { grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
+    .card { background: var(--card); border:1px solid #1f2540; border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .title { font-weight:700; font-size: 20px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #1f2540; font-size: 14px; text-align: left; }
+    th { position: sticky; top: 0; background: #151b33; }
+    .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#1f2540; }
+    .good { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    .footer { opacity:.7; font-size:12px; margin-top:24px; }
+    .hint { font-size: 12px; color: var(--muted); }
+  </style>
 </head>
 <body>
-    <h1>📡 Hostapd Dashboard</h1>
-
-    <div id="stats">
-        <h2>Verbundene Geräte</h2>
-        <table id="clients">
-            <thead>
-                <tr>
-                    <th>MAC</th>
-                    <th>Signal (dBm)</th>
-                    <th>TX Bytes</th>
-                    <th>RX Bytes</th>
-                    <th>Inaktiv (s)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="5">Lade...</td></tr>
-            </tbody>
-        </table>
+  <div class="wrap">
+    <div class="grid cards">
+      <div class="card">
+        <div class="title">Access Point</div>
+        <div id="ap-info" class="muted">Loading…</div>
+      </div>
+      <div class="card">
+        <div class="title">Connected clients</div>
+        <div style="font-size:40px;font-weight:700" id="live-num">0</div>
+        <div class="hint">live</div>
+      </div>
+      <div class="card">
+        <div class="title">24h Events</div>
+        <div><span class="good">⬆ <span id="ev-conn">0</span></span> &nbsp; <span class="bad">⬇ <span id="ev-disc">0</span></span></div>
+        <div class="hint">connect / disconnect</div>
+      </div>
     </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Client Count (last ~{{history_minutes}} min)</div>
+      <canvas id="clientsChart" height="90"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Connected Devices</div>
+      <div class="hint">No DHCP/DNS on AP: devices are shown by MAC. Rates are negotiated link rates, not actual throughput.</div>
+      <div style="max-height: 420px; overflow: auto; margin-top: 8px">
+      <table>
+        <thead>
+          <tr>
+            <th>MAC</th>
+            <th>Signal (dBm)</th>
+            <th>TX / RX (Mbps)</th>
+            <th>TX / RX (pkts)</th>
+            <th>Bytes TX / RX</th>
+            <th>Connected</th>
+            <th>Auth</th>
+            <th>Inactive (s)</th>
+          </tr>
+        </thead>
+        <tbody id="clients-body">
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="footer muted">Powered by hostapd_cli • Refresh every {{poll}}s • Interface: <code>{{iface}}</code></div>
+  </div>
+<script>
+let chart;
+function classifySignal(dbm){
+  if (dbm === undefined || dbm === null) return '';
+  if (dbm >= -60) return 'good';
+  if (dbm >= -75) return 'warn';
+  return 'bad';
+}
+function fmtBytes(n){
+  if(n===undefined||n===null) return '';
+  const units=['B','KB','MB','GB','TB'];
+  let i=0; let x = Number(n);
+  while(x>=1024 && i<units.length-1){x/=1024;i++;}
+  return x.toFixed(1)+' '+units[i];
+}
+async function fetchStatus(){
+  const [status, summary, clients] = await Promise.all([
+    fetch('/api/status').then(r=>r.json()),
+    fetch('/api/summary').then(r=>r.json()),
+    fetch('/api/clients').then(r=>r.json())
+  ]);
+  // AP info
+  const ap = status;
+  const parts = [];
+  if(ap.ssid) parts.push(`<b>${ap.ssid}</b>`);
+  if(ap.bssid) parts.push(`BSSID ${ap.bssid}`);
+  if(ap.channel) parts.push(`Ch ${ap.channel}`);
+  if(ap.freq) parts.push(`${ap.freq} MHz`);
+  if(ap.hw_mode) parts.push(ap.hw_mode);
+  if(ap.ieee80211n=='1') parts.push('11n');
+  if(ap.ieee80211ac=='1') parts.push('11ac');
+  if(ap.ieee80211ax=='1') parts.push('11ax');
+  document.getElementById('ap-info').innerHTML = parts.join(' • ') || '—';
+
+  document.getElementById('live-num').textContent = clients && clients.clients ? Object.keys(clients.clients).length : 0;
+  document.getElementById('ev-conn').textContent = summary.connects_24h || 0;
+  document.getElementById('ev-disc').textContent = summary.disconnects_24h || 0;
+
+  // Clients table
+  const tbody = document.getElementById('clients-body');
+  tbody.innerHTML = '';
+  if (clients && clients.clients){
+    const entries = Object.entries(clients.clients).sort();
+    for (const [mac, d] of entries){
+      const sig = d.signal_dbm ?? d.signal ?? d.signal_avg;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${mac}</code></td>
+        <td class="${classifySignal(sig)}">${sig ?? ''}</td>
+        <td>${(d.tx_rate_mbps ?? '')} / ${(d.rx_rate_mbps ?? '')}</td>
+        <td>${(d.tx_packets ?? '')} / ${(d.rx_packets ?? '')}</td>
+        <td>${fmtBytes(d.tx_bytes)} / ${fmtBytes(d.rx_bytes)}</td>
+        <td>${d.connected_time ? (d.connected_time+'s') : ''}</td>
+        <td>${d.authorized ?? ''}</td>
+        <td>${d.inactive ?? ''}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Chart
+  const hist = summary.history || [];
+  const labels = hist.map(([ts,_])=> new Date(ts*1000).toLocaleTimeString());
+  const data = hist.map(([_,c])=> c);
+  if(!chart){
+    const ctx = document.getElementById('clientsChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Clients', data }] },
+      options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { precision:0 } } } }
+    });
+  } else {
+    chart.data.labels = labels; chart.data.datasets[0].data = data; chart.update();
+  }
+}
+fetchStatus();
+setInterval(fetchStatus, {{interval}});
+</script>
 </body>
 </html>
