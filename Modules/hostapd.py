@@ -1,7 +1,7 @@
 import subprocess
-
+import os
 HOSTAPD_CLI = "/usr/sbin/hostapd_cli"  # oder aus .env lesen
-IFACE = "wlan0"
+IFACE = os.getenv("HOSTAPD_IFACE", "wlan0")
 
 
 def hostapd_status():
@@ -20,9 +20,9 @@ def hostapd_status():
         return {
             "active": "Yes",
             "interface": IFACE,
-            "ssid": data.get("ssid", "—"),
-            "channel": data.get("channel", "—"),
-            "frequency": data.get("freq", "—")
+            # "ssid": data.get("ssid", "—"),
+            # "channel": data.get("channel", "—"),
+            # "frequency": data.get("freq", "—")
         }
 
     except Exception:
