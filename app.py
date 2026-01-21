@@ -10,7 +10,7 @@ import time, sys
 import os, threading
 host = os.getenv("DASHBOARD_HOST", "0.0.0.0")
 port = os.getenv("DASHBOARD_PORT", 5000)
-interface = os.getenv("HOSTAPD_IFACE", "wlan0")
+interface = os.getenv("HOSTAPD_IFACE", "wlx1cbfce77e19b")
 
 
 
@@ -24,6 +24,7 @@ def run_server():
 
 if __name__ == "__main__":
     threading.Thread(target=run_server, daemon=True).start()
+    threading.Thread(target=routes.update_history, daemon=True).start()
     def handle_sigint(sig, frame):
         print("\nBeende Server...")
         sys.exit(0)

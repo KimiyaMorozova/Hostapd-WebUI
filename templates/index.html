@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="{{ url_for('static', filename='js/ap_status.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/clients_chart.js') }}" defer></script>
+
 </head>
 <body>
   <div class="wrap">
@@ -17,6 +19,12 @@
       <div class="card">
         <div class="title">Access Point</div>
         <div id="ap-info" class="muted">Loading…</div>
+        <div class="control-buttons">
+          <button onclick="controlHostapd('stop')" title="Stop Hostapd">⏹️</button>
+          <button onclick="controlHostapd('start')" title="Start Hostapd">▶️</button>
+          <button onclick="controlHostapd('restart')" title="Restart Hostapd">🔄</button>
+        </div>
+        <div id="control-status" class="muted" style="margin-top:8px"></div>
       </div>
       <div class="card">
         <div class="title">Connected clients</div>
@@ -44,12 +52,10 @@
           <tr>
             <th>MAC</th>
             <th>Signal (dBm)</th>
-            <th>TX / RX (Mbps)</th>
+            <th>TX / RX (pkts/s)</th>
             <th>TX / RX (pkts)</th>
-            <th>Bytes TX / RX</th>
-            <th>Connected</th>
-            <th>Auth</th>
-            <th>Inactive (s)</th>
+            <th>Connection Time</th>
+            <th>Time since last activity</th>
           </tr>
         </thead>
         <tbody id="clients-body">
