@@ -14,3 +14,7 @@ def register_routes(app):
     @app.get("/api/status")
     def status():
         return jsonify(hostapd.hostapd_status())
+
+    @app.get("/api/devices")
+    def devices():
+        return jsonify(hostapd.get_connected_devices())
