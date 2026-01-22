@@ -24,3 +24,5 @@
     .control-buttons button { background: var(--card); border: 1px solid #1f2540; border-radius: 8px; padding: 8px; font-size: 16px; cursor: pointer; transition: background 0.2s; }
     .control-buttons button:hover { background: rgba(255,255,255,0.1); }
     .hint { font-size: 12px; color: var(--muted); }
+    .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--muted); border-radius: 50%; border-top-color: var(--text); animation: spin 1s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }

@@ -13,6 +13,8 @@ function updateAPInfo() {
         })
         .catch(err => {
             console.error("Fehler beim Laden der AP-Daten:", err);
+            const apInfoDiv = document.getElementById('ap-info');
+            apInfoDiv.innerHTML = 'Error loading AP info';
         });
 }
 
