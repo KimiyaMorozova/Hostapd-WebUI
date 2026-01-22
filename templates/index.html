@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hostapd Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/ap_status.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/clients_chart.js') }}" defer></script>
+
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid cards">
+      <div class="card">
+        <div class="title">Access Point</div>
+        <div id="ap-info" class="muted"><span class="loading"></span> Loading…</div>
+        <div class="control-buttons">
+          <button onclick="controlHostapd('stop')" title="Stop Hostapd"><i class="fas fa-stop"></i></button>
+          <button onclick="controlHostapd('start')" title="Start Hostapd"><i class="fas fa-play"></i></button>
+          <button onclick="controlHostapd('restart')" title="Restart Hostapd"><i class="fas fa-redo"></i></button>
+        </div>
+        <div id="control-status" class="muted" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="title">Connected clients</div>
+        <div style="font-size:40px;font-weight:700" id="live-num">0</div>
+        <div class="hint">live</div>
+      </div>
+      <div class="card">
+        <div class="title">24h Events</div>
+        <div><span class="good">⬆ <span id="ev-conn">0</span></span> &nbsp; <span class="bad">⬇ <span id="ev-disc">0</span></span></div>
+        <div class="hint">connect / disconnect</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Client Count</div>
+      <canvas id="clientsChart" height="90"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Average Signal Strength</div>
+      <canvas id="signalChart" height="90"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Bandwidth Usage (TX/RX packets/s)</div>
+      <canvas id="bandwidthChart" height="90"></canvas>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="title" style="margin-bottom:8px">Connected Devices</div>
+      <div class="hint">No DHCP/DNS on AP: devices are shown by MAC. Rates are negotiated link rates, not actual throughput.</div>
+      <div style="max-height: 420px; overflow: auto; margin-top: 8px">
+      <table>
+        <thead>
+          <tr>
+            <th>MAC</th>
+            <th>Signal (dBm)</th>
+            <th>TX / RX (pkts/s)</th>
+            <th>TX / RX (pkts)</th>
+            <th>Connection Time</th>
+            <th>Time since last activity</th>
+          </tr>
+        </thead>
+        <tbody id="clients-body">
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="footer muted">Powered by hostapd_cli</div>
+  </div>
+</body>
+</html>
